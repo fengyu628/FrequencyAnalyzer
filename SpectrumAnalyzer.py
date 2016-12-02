@@ -1,5 +1,6 @@
 # coding:utf-8
 # author: Wang Chao
+# File: SpectrumAnalyzer.py
 # date: 2016.11.24
 
 from PyQt4 import QtGui

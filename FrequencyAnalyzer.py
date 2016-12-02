@@ -1,5 +1,6 @@
 # coding:utf-8
 # author: Wang Chao
+# File: FrequencyAnalyzer.py
 # date: 2016.11.30
 
 from PyQt4 import QtGui
