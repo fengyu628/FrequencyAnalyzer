@@ -141,8 +141,8 @@ class MplCanvas(FigureCanvas):
 
     def resizeEvent(self, event):
         self.draw_enable_flag = False
-        while self.drawing_flag is True:
-            continue
+        # while self.drawing_flag is True:
+        #     continue
         super(MplCanvas, self).resizeEvent(event)
         self.draw_enable_flag = True
 
