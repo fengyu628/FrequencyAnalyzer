@@ -12,6 +12,7 @@ class GetDataThread(QtCore.QThread):
         self.stop_flag = False
         self.main_window = weakref.proxy(main_window)
         self.mutex = QtCore.QMutex()
+        self.close_port_flag = False
 
     def stop(self):
         with QtCore.QMutexLocker(self.mutex):
@@ -25,14 +26,26 @@ class GetDataThread(QtCore.QThread):
             if self.main_window.stop_get_data_flag is True:
                 # time.sleep(0.1)
                 continue
+
+            if self.close_port_flag is True:
+                print('close port in get data thread')
+                self.main_window.serial_port.close()
+                self.close_port_flag = False
+
+            if not self.main_window.serial_port.isOpen():
+                # print('serial port not open')
+                time.sleep(0.1)
+                continue
             try:
                 line = self.main_window.serial_port.readline()
             except Exception as e:
+                # if len(str(e)) > 5:
                 print(e)
                 continue
             # delete the bad line and other print message
             if not line.startswith('~') and not line.startswith('^'):
-                print(line)
+                if len(line) > 2:
+                    print(line)
                 continue
             if self.stop_flag is True:
                 print('GetDataThread 2 stopped!')
@@ -74,10 +87,11 @@ class GetDataThread(QtCore.QThread):
                     else:
                         self.main_window.serial_port.write(
                             'FA02' + str(self.main_window.time_mode_frequency) + '.')
-                        print('sending FA029080.')
+                        print('sending FA02' + str(self.main_window.time_mode_frequency) + '.')
                         time.sleep(0.01)
                         # clean the serial port buffer
                         self.main_window.serial_port.close()
+                        # print(self.main_window.serial_port.closed)
                         self.main_window.serial_port.open()
                         continue
                 else:

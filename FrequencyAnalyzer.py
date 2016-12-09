@@ -11,9 +11,10 @@ import serial
 import serial.tools.list_ports
 from collections import OrderedDict
 from mplCanvas import MplCanvas
-from controls import MyEdit, MyLabel, MyButton
+from controls import MyEdit, MyLabel, MyButton, MyComboBox
 from drawThread import DrawCanvasThread
 from getDataThread import GetDataThread
+# _fromUtf8 = QtCore.QString.fromUtf8
 
 
 # ========================================== Main Window Class =========================================================
@@ -32,9 +33,9 @@ class MainWindow(QtGui.QMainWindow):
         # self.setWindowFlags(QtCore.Qt.WindowMinimizeButtonHint)
         self.setWindowTitle('Frequency Analyzer')
 
-        self.freqPointLabel = MyLabel('Frequency\nPoint (MHz) :')
-        self.freqPointLabel.setAlignment(QtCore.Qt.AlignCenter)
-        self.freqPointLabel.setFont(QtGui.QFont("Calibri", 12))
+        # self.freqPointLabel = MyLabel('Frequency\nPoint (MHz) :')
+        # self.freqPointLabel.setAlignment(QtCore.Qt.AlignCenter)
+        # self.freqPointLabel.setFont(QtGui.QFont("Calibri", 12))
         self.freqPointEdit = MyEdit('908.0')
         self.freqPointEdit.setFont(QtGui.QFont("Calibri", 16))
         self.freqPointEdit.setFixedWidth(60)
@@ -47,6 +48,11 @@ class MainWindow(QtGui.QMainWindow):
         self.timeModeButton = MyButton('Freq Point\nAnalysis')
         self.timeModeButton.setFont(QtGui.QFont("Aharoni", 13))
         self.connect(self.timeModeButton, QtCore.SIGNAL('clicked()'), self.time_mode)
+
+        self.serialPortLabel = MyLabel('Serial Port:')
+        self.serialPortComboBox = MyComboBox()
+        self.serialPortButton = QtGui.QPushButton('Change Serial\nPort')
+        self.connect(self.serialPortButton, QtCore.SIGNAL('clicked()'), self.change_serial_port)
 
         self.show_canvas = MplCanvas()
         self.show_canvas.canvas_clicked_signal.connect(self.show_click_position)
@@ -109,10 +115,13 @@ class MainWindow(QtGui.QMainWindow):
         self.frame1 = QtGui.QFrame()
         self.frame1.setFrameShape(QtGui.QFrame.StyledPanel)
         frame1_grid = QtGui.QGridLayout()
-        frame1_grid.addWidget(self.freqPointLabel, 0, 4, 1, 1, QtCore.Qt.AlignRight)
-        frame1_grid.addWidget(self.freqPointEdit, 0, 5, 1, 1, QtCore.Qt.AlignLeft)
         frame1_grid.addWidget(self.spectrumModeButton, 0, 0, 1, 1, QtCore.Qt.AlignCenter)
-        frame1_grid.addWidget(self.timeModeButton, 0, 6, 1, 1, QtCore.Qt.AlignCenter)
+        # frame1_grid.addWidget(self.freqPointLabel, 0, 1, 1, 1, QtCore.Qt.AlignRight)
+        frame1_grid.addWidget(self.timeModeButton, 0, 1, 1, 1, QtCore.Qt.AlignCenter)
+        frame1_grid.addWidget(self.freqPointEdit, 0, 2, 1, 1, QtCore.Qt.AlignLeft)
+        frame1_grid.addWidget(self.serialPortLabel, 0, 4, 1, 1, QtCore.Qt.AlignRight)
+        frame1_grid.addWidget(self.serialPortComboBox, 0, 5, 1, 1, QtCore.Qt.AlignLeft)
+        frame1_grid.addWidget(self.serialPortButton, 0, 6, 1, 1, QtCore.Qt.AlignLeft)
 
         frame1_grid.addWidget(self.show_canvas, 1, 0, 1, 7, QtCore.Qt.AlignCenter)
 
@@ -189,13 +198,16 @@ class MainWindow(QtGui.QMainWindow):
 
         self.serial_port = serial.Serial()
         self.serial_port.baudrate = 115200
-        self.serial_port.timeout = None
+        self.serial_port.timeout = 0.1
         # get the serial port list
         self.port_list = list(serial.tools.list_ports.comports())
+        for p in self.port_list:
+            self.serialPortComboBox.addItem(p[0])
 
         self.stop_thread_signal.connect(self.drawCanvasThread.stop)
         self.stop_thread_signal.connect(self.getDataThread.stop)
 
+        self.init_serial_port()
         self.start()
 
     # @staticmethod
@@ -422,16 +434,35 @@ class MainWindow(QtGui.QMainWindow):
                     (':     %.6f second' % (self.show_canvas.mark2_x - self.show_canvas.mark1_x)) +
                     (':      %.2f dbm' % (self.show_canvas.mark2_y - self.show_canvas.mark1_y)))
 
-    def start(self):
-        for f_pre in range(8500, 9280):
-            self.spectrum_data[(float(f_pre)/10)] = None
+    @QtCore.pyqtSlot()
+    def change_serial_port(self):
+        if self.serial_port.isOpen():
+            print('port: %s is opening, now close' % self.serial_port.port)
+            self.getDataThread.close_port_flag = True
+            time.sleep(0.3)
 
+        if self.serial_port.isOpen():
+            print('port: %s still open' % self.serial_port.port)
+            return
+        else:
+            print('port: %s closed!' % self.serial_port.port)
+        self.serial_port.port = str(self.serialPortComboBox.currentText())
+        self.statusLeftLabel.setText('Serial Port :  ' + self.serial_port.port)
+        self.start()
+
+    def init_serial_port(self):
         # set the serial port number
         auto_set_port = False
         for port in self.port_list:
+            print(port[1].decode( "GB2312"))
+            # print(port[1].decode( "GBK"))
             if port[1].startswith('Prolific') or port[1].startswith('USB-SERIAL CH340'):
                 self.serial_port.port = port[0]
                 self.statusLeftLabel.setText('Serial Port :  ' + port[1])
+                # set the ComboBox to correct port
+                for index in range(self.serialPortComboBox.count()):
+                    if port[0] == self.serialPortComboBox.itemText(index):
+                        self.serialPortComboBox.setCurrentIndex(index)
                 auto_set_port = True
         if auto_set_port is False:
             self.statusLeftLabel.setText('Serial Port :  ' + 'Not find serial port!')
@@ -440,17 +471,26 @@ class MainWindow(QtGui.QMainWindow):
         if self.force_port_num is not None:
             self.serial_port.port = self.force_port_num
             self.statusLeftLabel.setText('Serial Port :  ' + self.force_port_num)
+
+    def start(self):
         try:
             self.serial_port.open()
+            print('open serial port %s' % self.serial_port.port)
         except Exception as e:
             self.statusLeftLabel.setText('Serial Port :  ' + e.message)
             print(e)
             return
+
+        for f_pre in range(8500, 9280):
+            self.spectrum_data[(float(f_pre)/10)] = None
+        self.mode_changing_flag = True
+        # print(self.getDataThread.isRunning())
         self.getDataThread.start(QtCore.QThread.HighPriority)
         time.sleep(0.1)
         self.drawCanvasThread.start(QtCore.QThread.LowPriority)
         self.realTimeButton.setDisabled(True)
         self.startButton.setDisabled(True)
+        # print(self.getDataThread.isRunning())
 
     def closeEvent(self, *args, **kwargs):
         self.stop_thread_signal.emit()

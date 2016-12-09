@@ -23,3 +23,10 @@ class MyButton(QtGui.QPushButton):
         super(MyButton, self).__init__(*args)
         self.setFont(QtGui.QFont("Calibri", 11))
         self.setFixedSize(100, 50)
+
+
+class MyComboBox(QtGui.QComboBox):
+    def __init__(self, *args):
+        super(MyComboBox, self).__init__(*args)
+        self.setFont(QtGui.QFont("Calibri", 10))
+        self.setFixedSize(80, 20)
