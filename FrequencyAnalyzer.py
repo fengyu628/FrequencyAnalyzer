@@ -49,10 +49,11 @@ class MainWindow(QtGui.QMainWindow):
         self.timeModeButton.setFont(QtGui.QFont("Aharoni", 13))
         self.connect(self.timeModeButton, QtCore.SIGNAL('clicked()'), self.time_mode)
 
-        self.serialPortLabel = MyLabel('Serial Port:')
+        self.serialPortLabel = MyLabel('Serial Port :')
         self.serialPortComboBox = MyComboBox()
-        self.serialPortButton = QtGui.QPushButton('Change Serial\nPort')
-        self.connect(self.serialPortButton, QtCore.SIGNAL('clicked()'), self.change_serial_port)
+        self.serialPortComboBox.pressed_signal.connect(self.press_serial_port_combobox)
+        self.serialPortChangeButton = QtGui.QPushButton('Change Serial\nPort')
+        self.connect(self.serialPortChangeButton, QtCore.SIGNAL('clicked()'), self.change_serial_port)
 
         self.show_canvas = MplCanvas()
         self.show_canvas.canvas_clicked_signal.connect(self.show_click_position)
@@ -121,7 +122,7 @@ class MainWindow(QtGui.QMainWindow):
         frame1_grid.addWidget(self.freqPointEdit, 0, 2, 1, 1, QtCore.Qt.AlignLeft)
         frame1_grid.addWidget(self.serialPortLabel, 0, 4, 1, 1, QtCore.Qt.AlignRight)
         frame1_grid.addWidget(self.serialPortComboBox, 0, 5, 1, 1, QtCore.Qt.AlignLeft)
-        frame1_grid.addWidget(self.serialPortButton, 0, 6, 1, 1, QtCore.Qt.AlignLeft)
+        frame1_grid.addWidget(self.serialPortChangeButton, 0, 6, 1, 1, QtCore.Qt.AlignLeft)
 
         frame1_grid.addWidget(self.show_canvas, 1, 0, 1, 7, QtCore.Qt.AlignCenter)
 
@@ -219,6 +220,14 @@ class MainWindow(QtGui.QMainWindow):
     #         draw_title = ('%.1f' % (float(self.main_window.time_mode_frequency) / 10)) + 'MHz Signal Strength'
     #         self.show_canvas.draw_data(x, y, self.show_mode, title=draw_title)
     #     self.thread_enable_draw_signal.emit()
+
+    @QtCore.pyqtSlot()
+    def press_serial_port_combobox(self):
+        print('press_serial_port_combobox')
+        self.serialPortComboBox.clear()
+        self.port_list = list(serial.tools.list_ports.comports())
+        for p in self.port_list:
+            self.serialPortComboBox.addItem(p[0])
 
     @QtCore.pyqtSlot()
     def mark1_button_clicked(self):
@@ -454,7 +463,7 @@ class MainWindow(QtGui.QMainWindow):
         # set the serial port number
         auto_set_port = False
         for port in self.port_list:
-            print(port[1].decode( "GB2312"))
+            print(port[1].decode("GB2312"))
             # print(port[1].decode( "GBK"))
             if port[1].startswith('Prolific') or port[1].startswith('USB-SERIAL CH340'):
                 self.serial_port.port = port[0]

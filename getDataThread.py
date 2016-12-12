@@ -4,6 +4,7 @@
 from PyQt4 import QtCore
 import weakref
 import time
+import serial.tools.list_ports
 
 
 class GetDataThread(QtCore.QThread):
@@ -35,12 +36,23 @@ class GetDataThread(QtCore.QThread):
             if not self.main_window.serial_port.isOpen():
                 # print('serial port not open')
                 time.sleep(0.1)
+                # serial_port_list = list(serial.tools.list_ports.comports())
+                # for p in serial_port_list:
+                #     if self.main_window.serial_port.port == p[0]:
+                #         print('serial port resume!')
+                #         # self.main_window.start()
+                #         try:
+                #             self.main_window.serial_port.open()
+                #         except Exception as e:
+                #             print(e)
                 continue
             try:
                 line = self.main_window.serial_port.readline()
             except Exception as e:
                 # if len(str(e)) > 5:
                 print(e)
+                self.main_window.serial_port.close()
+                # time.sleep(0.1)
                 continue
             # delete the bad line and other print message
             if not line.startswith('~') and not line.startswith('^'):
