@@ -223,7 +223,7 @@ class MainWindow(QtGui.QMainWindow):
 
     @QtCore.pyqtSlot()
     def press_serial_port_combobox(self):
-        print('press_serial_port_combobox')
+        print('refresh serial port list..')
         self.serialPortComboBox.clear()
         self.port_list = list(serial.tools.list_ports.comports())
         for p in self.port_list:
