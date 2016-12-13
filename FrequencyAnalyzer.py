@@ -1,7 +1,7 @@
 # coding:utf-8
 # author: Wang Chao
 # File: FrequencyAnalyzer.py
-# date: 2016.11.30
+# date: 2016.12.13
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore

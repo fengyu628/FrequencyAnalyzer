@@ -4,7 +4,6 @@
 from PyQt4 import QtCore
 import weakref
 import time
-import serial.tools.list_ports
 
 
 class GetDataThread(QtCore.QThread):
@@ -16,8 +15,7 @@ class GetDataThread(QtCore.QThread):
         self.close_port_flag = False
 
     def stop(self):
-        with QtCore.QMutexLocker(self.mutex):
-            self.stop_flag = True
+        self.stop_flag = True
 
     def run(self):
         while True:
@@ -116,22 +114,32 @@ class GetDataThread(QtCore.QThread):
             line_list = line.split('#')
             # deal with different mode
             if self.main_window.show_mode == 'spectrum':
+                # for hardware restart
+                if line_list[0] != '~':
+                    with QtCore.QMutexLocker(self.mutex):
+                        self.main_window.mode_changing_flag = True
+                        continue
                 try:
                     freq_spectrum = float(line_list[1]) / 10
                     rssi_spectrum = int(line_list[2])
                 except Exception as e:
                     print(e)
                     continue
-                # self.main_window.show_canvas.draw_enable_flag = False
-                with QtCore.QMutexLocker(self.mutex):
-                    if self.main_window.show_max_flag is True:
-                        if rssi_spectrum > self.main_window.spectrum_data[freq_spectrum]:
-                            self.main_window.spectrum_data[freq_spectrum] = rssi_spectrum
-                    else:
+                self.main_window.show_canvas.draw_enable_flag = False
+                # with QtCore.QMutexLocker(self.mutex):
+                if self.main_window.show_max_flag is True:
+                    if rssi_spectrum > self.main_window.spectrum_data[freq_spectrum]:
                         self.main_window.spectrum_data[freq_spectrum] = rssi_spectrum
-                # self.main_window.show_canvas.draw_enable_flag = True
+                else:
+                    self.main_window.spectrum_data[freq_spectrum] = rssi_spectrum
+                self.main_window.show_canvas.draw_enable_flag = True
 
             elif self.main_window.show_mode == 'time':
+                # for hardware restart
+                if line_list[0] != '^':
+                    with QtCore.QMutexLocker(self.mutex):
+                        self.main_window.mode_changing_flag = True
+                        continue
                 try:
                     # freq_time = int(line_list[1])
                     time_time = time.time() - self.main_window.time_mode_start_time
@@ -139,16 +147,16 @@ class GetDataThread(QtCore.QThread):
                 except Exception as e:
                     print(e)
                     continue
-                # self.main_window.show_canvas.draw_enable_flag = False
-                with QtCore.QMutexLocker(self.mutex):
-                    self.main_window.time_data_x.append(time_time)
-                    self.main_window.time_data_y.append(rssi_time)
-                    # keep fixed length
-                    if self.main_window.time_data_x[-1] - self.main_window.time_data_x[0] > \
-                            self.main_window.time_mode_x_show_length:
-                        self.main_window.time_data_x = self.main_window.time_data_x[2:]
-                        self.main_window.time_data_y = self.main_window.time_data_y[2:]
-                # self.main_window.show_canvas.draw_enable_flag = True
+                self.main_window.show_canvas.draw_enable_flag = False
+                # with QtCore.QMutexLocker(self.mutex):
+                self.main_window.time_data_x.append(time_time)
+                self.main_window.time_data_y.append(rssi_time)
+                # keep fixed length
+                if self.main_window.time_data_x[-1] - self.main_window.time_data_x[0] > \
+                        self.main_window.time_mode_x_show_length:
+                    self.main_window.time_data_x = self.main_window.time_data_x[2:]
+                    self.main_window.time_data_y = self.main_window.time_data_y[2:]
+                self.main_window.show_canvas.draw_enable_flag = True
 
             else:
                 print('unknown mode, get data thread return!')
