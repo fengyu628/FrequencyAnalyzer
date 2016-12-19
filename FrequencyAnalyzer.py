@@ -264,7 +264,7 @@ class MainWindow(QtGui.QMainWindow):
         self.time_mode_x_show_length = time_scale_pre
         self.show_canvas.canvas_time_mode_x_show_length = self.time_mode_x_show_length
         self.set_freq_point()
-        self.mode_changing_flag = True
+        # self.mode_changing_flag = True
 
     @QtCore.pyqtSlot()
     def start_stop_freq_show_change(self):
@@ -296,17 +296,20 @@ class MainWindow(QtGui.QMainWindow):
     def set_freq_point(self):
         if len(self.freqPointEdit.text()) < 3 or len(self.freqPointEdit.text()) > 5:
             print('wrong frequency length, please enter like \'XXX.X\' or \'XXX\'')
+            return False
         try:
             time_mode_frequency_pre = float(self.freqPointEdit.text())
         except Exception as e:
             print(e)
-            return
+            return False
         if time_mode_frequency_pre < 850 or time_mode_frequency_pre > 928:
             print('wrong frequency, range:850 to 928')
-            return
+            return False
         self.time_mode_frequency = int(time_mode_frequency_pre * 10)
         print('set frequency: %f' % (float(self.time_mode_frequency)/10))
         self.clear_mark()
+        self.mode_changing_flag = True
+        return True
 
     def clear_mark(self):
         self.show_canvas.mark_number = 1
@@ -325,14 +328,15 @@ class MainWindow(QtGui.QMainWindow):
             self.time_mode()
         else:
             self.set_freq_point()
-            self.mode_changing_flag = True
+            # self.mode_changing_flag = True
 
     @QtCore.pyqtSlot()
     def time_mode(self):
-        self.set_freq_point()
+        if self.set_freq_point() is False:
+            return
         print('start change mode to time mode...')
         self.show_mode = 'time'
-        self.mode_changing_flag = True
+        # self.mode_changing_flag = True
         self.startFreqShowEdit.setDisabled(True)
         self.stopFreqShowEdit.setDisabled(True)
         self.setDefaultFreqButton.setDisabled(True)
