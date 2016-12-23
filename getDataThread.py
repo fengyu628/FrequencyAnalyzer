@@ -125,6 +125,9 @@ class GetDataThread(QtCore.QThread):
                 except Exception as e:
                     print(e)
                     continue
+                # delete the wrong data
+                if rssi_spectrum > -1:
+                    continue
                 self.main_window.show_canvas.draw_enable_flag = False
                 # with QtCore.QMutexLocker(self.mutex):
                 if self.main_window.show_max_flag is True:
@@ -146,6 +149,9 @@ class GetDataThread(QtCore.QThread):
                     rssi_time = int(line_list[2])
                 except Exception as e:
                     print(e)
+                    continue
+                # delete the wrong data
+                if rssi_time > -1:
                     continue
                 self.main_window.show_canvas.draw_enable_flag = False
                 # with QtCore.QMutexLocker(self.mutex):
