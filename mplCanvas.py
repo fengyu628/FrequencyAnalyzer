@@ -84,8 +84,8 @@ class MplCanvas(FigureCanvas):
                     self.ax.set_title('Spectrum Analyzer', fontsize=16)
                     self.ax.set_ylabel(self.title, fontsize=14)
                     self.ax.set_xlabel('Frequency (MHz)', fontsize=14)
-                    self.ax.scatter(self.mark1_x, self.mark1_y, c='r', s=200, marker='+')
-                    self.ax.scatter(self.mark2_x, self.mark2_y, c='g', s=200, marker='+')
+                    self.ax.scatter(self.mark1_x, self.mark1_y, c='r', s=10000000, marker='+')
+                    self.ax.scatter(self.mark2_x, self.mark2_y, c='g', s=10000000, marker='+')
                     self.ax.plot(x, y, color="blue", linewidth=1)
                     self.draw()
                 except Exception as e:
@@ -107,8 +107,8 @@ class MplCanvas(FigureCanvas):
                     self.ax.set_title(title, fontsize=16)
                     self.ax.set_ylabel(self.title, fontsize=14)
                     self.ax.set_xlabel('Time (s)', fontsize=14)
-                    self.ax.scatter(self.mark1_x, self.mark1_y, c='r', s=200, marker='+')
-                    self.ax.scatter(self.mark2_x, self.mark2_y, c='g', s=200, marker='+')
+                    self.ax.scatter(self.mark1_x, self.mark1_y, c='r', s=10000000, marker='+')
+                    self.ax.scatter(self.mark2_x, self.mark2_y, c='g', s=10000000, marker='+')
                     self.ax.plot(x, y, color="blue", linewidth=1)
                     self.draw()
                 except Exception as e:
